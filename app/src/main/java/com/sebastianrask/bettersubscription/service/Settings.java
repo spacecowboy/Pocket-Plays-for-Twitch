@@ -15,9 +15,7 @@ import com.sebastianrask.bettersubscription.tasks.GetLiveStreamURL;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by SebastianRask on 29-04-2015.

@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -14,12 +13,9 @@ import android.view.animation.AnimationSet;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.cast.framework.CastButtonFactory;
-import com.google.android.gms.cast.framework.CastContext;
 import com.rey.material.widget.ProgressView;
 import com.sebastianrask.bettersubscription.BuildConfig;
 import com.sebastianrask.bettersubscription.R;
-import com.sebastianrask.bettersubscription.activities.DonationActivity;
 import com.sebastianrask.bettersubscription.activities.ThemeActivity;
 import com.sebastianrask.bettersubscription.adapters.MainActivityAdapter;
 import com.sebastianrask.bettersubscription.adapters.StreamsAdapter;
@@ -95,7 +91,6 @@ public abstract class MainActivity extends ThemeActivity {
     protected UniversalOnScrollListener mScrollListener;
     protected Settings settings;
     protected TooltipWindow mTooltip;
-    protected CastContext mCastContext;
 
     /**
      * Refreshes the content of the activity
@@ -141,7 +136,6 @@ public abstract class MainActivity extends ThemeActivity {
         mDrawerFragment = (NavigationDrawerFragment) getSupportFragmentManager().findFragmentById(R.id.drawer_fragment);
         settings = new Settings(getBaseContext());
 
-        mCastContext = Service.getShareCastContext(this);
         initErrorView();
         initTitleAndIcon();
 
@@ -220,9 +214,6 @@ public abstract class MainActivity extends ThemeActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main_activity, menu);
 
-        if (mCastContext != null) {
-            MenuItem routeItem = CastButtonFactory.setUpMediaRouteButton(getApplicationContext(), menu, R.id.media_route_menu_item);
-        }
         return true;
     }
 
@@ -414,17 +405,6 @@ public abstract class MainActivity extends ThemeActivity {
         }
 
         AnimationService.setActivityIconRevealAnimation(mCircleIconWrapper, mTitleView);
-    }
-
-    /**
-     * Navigates to the Donation Activity.
-     */
-    public void navigateToDonationActivity() {
-        final Intent intent = new Intent(this, DonationActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-        intent.putExtra(this.getResources().getString(R.string.main_toolbar_position_y), fromMainToolbarPosition);
-        intent.putExtra(this.getResources().getString(R.string.decorative_toolbar_position_y), fromToolbarPosition);
-        startActivity(intent);
     }
 
     /**

@@ -20,16 +20,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
-import androidx.annotation.DrawableRes;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.fragment.app.Fragment;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.Toolbar;
 import android.transition.Transition;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -54,24 +44,16 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.cast.MediaInfo;
-import com.google.android.gms.cast.MediaMetadata;
-import com.google.android.gms.cast.framework.CastButtonFactory;
-import com.google.android.gms.cast.framework.CastContext;
-import com.google.android.gms.cast.framework.CastSession;
-import com.google.android.gms.cast.framework.CastState;
-import com.google.android.gms.cast.framework.CastStateListener;
-import com.google.android.gms.cast.framework.SessionManagerListener;
-import com.google.android.gms.common.images.WebImage;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.google.gson.Gson;
 import com.rey.material.widget.ProgressView;
 import com.sebastianrask.bettersubscription.R;
 import com.sebastianrask.bettersubscription.activities.ChannelActivity;
 import com.sebastianrask.bettersubscription.activities.UsageTrackingAppCompatActivity;
 import com.sebastianrask.bettersubscription.activities.stream.StreamActivity;
-import com.sebastianrask.bettersubscription.activities.stream.VODActivity;
 import com.sebastianrask.bettersubscription.adapters.PanelAdapter;
 import com.sebastianrask.bettersubscription.broadcasts_and_services.PlayerService;
 import com.sebastianrask.bettersubscription.misc.FollowHandler;
@@ -97,10 +79,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-public class StreamFragment extends Fragment implements StreamSessionManagerListener.Callback, CastStateListener {
+import androidx.annotation.DrawableRes;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+public class StreamFragment extends Fragment {
     private final int PLAY_PAUSE_ANIMATION_DURATION = 500,
             HIDE_ANIMATION_DELAY = 3000,
             SNACKBAR_SHOW_DURATION = 4000;
@@ -114,8 +103,7 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
     public boolean isFullscreen = false, embedded = false;
     public ChannelInfo mChannelInfo;
     public String vodId;
-    public boolean castingViewVisible = false,
-            audioViewVisible = false,
+    public boolean audioViewVisible = false,
             chatOnlyViewVisible = false,
             autoPlay = true,
             hasPaused = false;
@@ -141,11 +129,10 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
             mPreview,
             mShowChatButton;
     private SeekBar mProgressBar;
-    private TextView mCurrentProgressView, source, high, medium, low, mobile, auto, castingTextView, mCurrentViewersView;
+    private TextView mCurrentProgressView, source, high, medium, low, mobile, auto, mCurrentViewersView;
     private AppCompatActivity mActivity;
     private Snackbar snackbar;
     private ProgressView mBufferingView;
-    private CastContext mCastContext;
 
     private final Runnable progressRunnable = new Runnable() {
         @Override
@@ -186,8 +173,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
             fetchChattersDelay = 1000 * 60; // 30 seco... Nah just kidding. Also a minute.
 
     private Integer triesForNextBest = 0;
-
-    private SessionManagerListener mSessionManagerListener;
 
     public static StreamFragment newInstance(Bundle args) {
         StreamFragment fragment = new StreamFragment();
@@ -237,10 +222,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        mCastContext = Service.getShareCastContext(getContext());
-        mSessionManagerListener = new StreamSessionManagerListener(this, getContext());
-
         Bundle args = getArguments();
         setHasOptionsMenu(true);
         settings = new Settings(getActivity());
@@ -289,7 +270,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
         mFullScreenButton = mRootView.findViewById(R.id.fullscreen_icon);
         mShowChatButton = mRootView.findViewById(R.id.show_chat_button);
         mCurrentProgressView = mRootView.findViewById(R.id.currentProgess);
-        castingTextView = mRootView.findViewById(R.id.chromecast_text);
         mProgressBar = mRootView.findViewById(R.id.progressBar);
         mBufferingView = mRootView.findViewById(R.id.circle_progress);
         mCurrentViewersView = mRootView.findViewById(R.id.txtViewViewers);
@@ -311,12 +291,7 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
             }
 
             try {
-                CastSession currentSession = null;
-                if (mCastContext != null) {
-                    currentSession = mCastContext.getSessionManager().getCurrentCastSession();
-                }
-
-                if (mVideoView.isPlaying() || (isAudioOnlyModeEnabled() && PlayerService.getInstance().getMediaPlayer().isPlaying()) || (currentSession != null && currentSession.isConnected() && currentSession.getRemoteMediaClient().isPlaying())) {
+                if (mVideoView.isPlaying() || (isAudioOnlyModeEnabled() && PlayerService.getInstance().getMediaPlayer().isPlaying())) {
                     pauseStream();
                 } else if (!mVideoView.isPlaying()) {
                     resumeStream();
@@ -357,7 +332,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
             Log.e(LOG_TAG, "Something went wrong playing the stream for " + mChannelInfo.getDisplayName() + " - What: " + what + " - Extra: " + extra);
             if (getActivity() != null && getActivity() instanceof UsageTrackingAppCompatActivity) {
                 UsageTrackingAppCompatActivity mUsageTrackingActivity = (UsageTrackingAppCompatActivity) getActivity();
-                mUsageTrackingActivity.trackEvent("Error", "StreamPlayback error " + mChannelInfo.getDisplayName() + " - What: " + what + " - Extra: " + extra);
             }
 
             playbackFailed();
@@ -460,7 +434,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
         progressHandler.postDelayed(progressRunnable, 1000);
 
         keepScreenOn();
-        checkChromecastConnection();
 
         if (autoPlay || vodId != null) {
             startStreamWithQuality(settings.getPrefStreamQuality());
@@ -505,27 +478,13 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
     public void onResume() {
         super.onResume();
 
-        if (mCastContext != null) {
-            mCastContext.getSessionManager().addSessionManagerListener(mSessionManagerListener, CastSession.class);
-            mCastContext.addCastStateListener(this);
-        }
-
         originalMainToolbarPadding = mToolbar.getPaddingRight();
         originalCtrlToolbarPadding = mControlToolbar.getPaddingRight();
 
-        if (castingViewVisible) {
-            if (!isCastConnected() && !isCastConnecting()) {
-                disableCastingView();
-                startStreamWithQuality(settings.getPrefStreamQuality());
-            } else {
-                // Connected to chrome cast.
-                updateQualitySelectorsWithTask();
-            }
-
-        } else if (audioViewVisible && !isAudioOnlyModeEnabled()) {
+        if (audioViewVisible && !isAudioOnlyModeEnabled()) {
             disableAudioOnlyView();
             startStreamWithQuality(settings.getPrefStreamQuality());
-        } else if (!castingViewVisible && !audioViewVisible && hasPaused && settings.getStreamPlayerAutoContinuePlaybackOnReturn()) {
+        } else if (!audioViewVisible && hasPaused && settings.getStreamPlayerAutoContinuePlaybackOnReturn()) {
             startStreamWithQuality(settings.getPrefStreamQuality());
         }
 
@@ -541,11 +500,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
     public void onPause() {
         super.onPause();
 
-        if (mCastContext != null) {
-            mCastContext.getSessionManager().removeSessionManagerListener(mSessionManagerListener, CastSession.class);
-            mCastContext.removeCastStateListener(this);
-        }
-
         Log.d(LOG_TAG, "Stream Fragment paused");
         hasPaused = true;
         if (PlayerService.getInstance() != null) {
@@ -560,7 +514,7 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
 
         mBufferingView.stop();
 
-        if (!castingViewVisible && !audioViewVisible) {
+        if (!audioViewVisible) {
             pauseStream();
         }
 
@@ -723,11 +677,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         if (!embedded) {
-            // Only add chromecast btn for live streams
-            if (vodId == null) {
-                MenuItem routeItem = CastButtonFactory.setUpMediaRouteButton(getContext().getApplicationContext(), menu, R.id.media_route_menu_item);
-            }
-
             optionsMenuItem = menu.findItem(R.id.menu_item_options);
             optionsMenuItem.setVisible(false);
             optionsMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -854,149 +803,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
     public int getLandscapeChatTargetWidth() {
         return (int) (getScreenWidth(getActivity()) * (settings.getChatLandscapeWidth() / 100.0));
     }
-
-    private void checkChromecastConnection() {
-        if (isCastConnected() || isCastConnecting()) {
-            if (getActivity() instanceof VODActivity) {
-                showSnackbar(getString(R.string.stream_chromecast_no_vod), SNACKBAR_SHOW_DURATION);
-                if (mCastContext != null) {
-                    mCastContext.getSessionManager().endCurrentSession(true);
-                }
-            } else {
-                initCastingView();
-                try {
-                    CastSession currentCastSession = mCastContext != null ? mCastContext.getSessionManager().getCurrentCastSession() : null;
-                    if (currentCastSession != null && currentCastSession.getRemoteMediaClient().hasMediaSession()) {
-                        showPauseIcon();
-                        onCastMediaPlaying();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private void onCastMediaPlaying() {
-        onCastStateChanged(CastState.CONNECTED);
-    }
-
-    private void initCastingView() {
-        castingViewVisible = true;
-        auto.setVisibility(View.GONE); // Auto does not work on chromecast
-        mVideoView.setVisibility(View.INVISIBLE);
-        mBufferingView.setVisibility(View.GONE);
-        previewInbackGround = false;
-        castingTextView.setVisibility(View.VISIBLE);
-        //castingTextView.setText(getString(R.string.stream_chromecast_connecting));
-        showVideoInterface();
-    }
-
-    private void disableCastingView() {
-        castingViewVisible = false;
-        auto.setVisibility(View.VISIBLE);
-        mVideoView.setVisibility(View.VISIBLE);
-        Service.bringToBack(mPreview);
-        mBufferingView.setVisibility(View.VISIBLE);
-        previewInbackGround = true;
-        castingTextView.setVisibility(View.INVISIBLE);
-        showVideoInterface();
-    }
-
-    private String getBestCastQuality(Map<String, String> castQualities, String quality, Integer numberOfTries) {
-        if (numberOfTries > GetLiveStreamURL.CAST_QUALITIES.length - 1) {
-            return null;
-        }
-
-        if (quality.equals(GetLiveStreamURL.QUALITY_AUTO) || quality.equals(GetLiveStreamURL.QUALITY_AUDIO_ONLY)) {
-            quality = GetLiveStreamURL.QUALITY_MEDIUM;
-        }
-
-        if (castQualities.containsKey(quality)) {
-            return quality;
-        } else {
-            numberOfTries++;
-            List<String> qualityList = Arrays.asList(GetLiveStreamURL.CAST_QUALITIES);
-            int next = qualityList.indexOf(quality) - 1;
-            if (next < 0) {
-                quality = GetLiveStreamURL.QUALITY_SOURCE;
-            } else {
-                quality = qualityList.get(next);
-            }
-            return getBestCastQuality(castQualities, quality, numberOfTries);
-        }
-    }
-
-    private void playOnCast() {
-        Map<String, String> availableCastQualities = new HashMap<>(qualityURLs);
-        // Cant play auto or audio only on chrome cast
-        if (availableCastQualities.containsKey(GetLiveStreamURL.QUALITY_AUTO)) {
-            availableCastQualities.remove(GetLiveStreamURL.QUALITY_AUTO);
-        }
-        if (availableCastQualities.containsKey(GetLiveStreamURL.QUALITY_AUDIO_ONLY)) {
-            availableCastQualities.remove(GetLiveStreamURL.QUALITY_AUDIO_ONLY);
-        }
-
-        String castQuality = getBestCastQuality(availableCastQualities, settings.getPrefStreamQuality(), 0);
-        if (castQuality != null) {
-            updateSelectedQuality(castQuality);
-            playOnCast(qualityURLs.get(castQuality));
-            Log.d(LOG_TAG, "CASTING URL: " + qualityURLs.get(castQuality));
-        } else {
-            //No Available qualities for casting
-            showSnackbar(getString(R.string.stream_no_chromecast_quality_supported), SNACKBAR_SHOW_DURATION);
-        }
-    }
-
-    /**
-     * Sends the URL to a chromecast (Or android TV) if it is connected.
-     *
-     * @param videoURL
-     */
-    private void playOnCast(String videoURL) {
-        //ToDo: We probably need to make a custom Cast receiver to play a link from Twitch. As Twitch doesnt allow third party receivers to play link from another origin
-        // Use https://www.udacity.com/course/progress#!/c-ud875B and
-        // https://github.com/googlecast/CastReferencePlayer
-        try {
-            String logoImageUrl = mChannelInfo.getLogoURLString();
-            String streamerName = mChannelInfo.getDisplayName();
-            if (mCastContext != null && mCastContext.getCastState() == CastState.CONNECTED) {
-                MediaMetadata mediaMetadata = new MediaMetadata();
-                mediaMetadata.putString(getString(R.string.stream_fragment_vod_id), vodId);
-                mediaMetadata.putInt(getString(R.string.stream_fragment_vod_length), vodLength);
-                mediaMetadata.putString(getString(R.string.stream_fragment_streamerInfo), new Gson().toJson(mChannelInfo));
-                mediaMetadata.putString(MediaMetadata.KEY_TITLE, streamerName);
-                if (logoImageUrl != null) {
-                    mediaMetadata.addImage(new WebImage(Uri.parse(logoImageUrl)));
-                }
-
-                MediaInfo.Builder mediaBuilder = new MediaInfo.Builder(videoURL)
-                        .setMetadata(mediaMetadata)
-                        .setContentType("application/x-mpegURL");
-
-
-                if (vodId == null) {
-                    mediaBuilder
-                            .setStreamType(MediaInfo.STREAM_TYPE_LIVE)
-                            .setStreamDuration(MediaInfo.UNKNOWN_DURATION);
-                } else {
-                    mediaBuilder
-                            .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-                            .setStreamDuration(vodLength / 1000);
-                }
-
-
-                CastSession session = mCastContext.getSessionManager().getCurrentCastSession();
-                if (session != null) {
-                    checkChromecastConnection();
-                    session.getRemoteMediaClient().load(mediaBuilder.build(), true, 0);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 
     /**
      * Checks if the activity was started with a shared view in high API levels.
@@ -1171,7 +977,7 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
      * Hides the video control interface with animations
      */
     private void hideVideoInterface() {
-        if (mToolbar != null && !isCastConnected() && !isCastConnecting() && !audioViewVisible && !chatOnlyViewVisible) {
+        if (mToolbar != null && !audioViewVisible && !chatOnlyViewVisible) {
             mToolbar.animate().alpha(0f).setInterpolator(new AccelerateDecelerateInterpolator()).start();
             mControlToolbar.animate().alpha(0f).setInterpolator(new AccelerateDecelerateInterpolator()).start();
             mPlayPauseWrapper.animate().alpha(0f).setInterpolator(new AccelerateDecelerateInterpolator()).start();
@@ -1295,15 +1101,7 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
 
         delayAnimationHandler.removeCallbacks(hideAnimationRunnable);
 
-        if (isCastConnected()) {
-            try {
-                if (mCastContext != null) {
-                    mCastContext.getSessionManager().getCurrentCastSession().getRemoteMediaClient().pause();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else if (isAudioOnlyModeEnabled()) {
+        if (isAudioOnlyModeEnabled()) {
             Log.d(LOG_TAG, "Pausing audio");
             Intent pausePlayerService = new Intent(getContext(), PlayerService.class);
             pausePlayerService.setAction(PlayerService.ACTION_PAUSE);
@@ -1321,15 +1119,7 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
         showPauseIcon();
         mBufferingView.start();
 
-        if (isCastConnected() || isCastConnecting()) {
-            try {
-                if (mCastContext != null) {
-                    mCastContext.getSessionManager().getCurrentCastSession().getRemoteMediaClient().play();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else if (isAudioOnlyModeEnabled()) {
+        if (isAudioOnlyModeEnabled()) {
             Log.d(LOG_TAG, "Resuming Audio");
             Intent playServiceIntent = new Intent(getContext(), PlayerService.class);
             playServiceIntent.setAction(PlayerService.ACTION_PLAY);
@@ -1344,16 +1134,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
 
         checkVodProgress();
         keepScreenOn();
-    }
-
-    private boolean isCastConnected() {
-        CastSession session = mCastContext != null ? mCastContext.getSessionManager().getCurrentCastSession() : null;
-        return session != null && session.isConnected();
-    }
-
-    private boolean isCastConnecting() {
-        CastSession session = mCastContext != null ? mCastContext.getSessionManager().getCurrentCastSession() : null;
-        return session != null && session.isConnecting();
     }
 
     /**
@@ -1495,10 +1275,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
      * @param url
      */
     private void playUrl(String url) {
-        if (isCastConnected() || isCastConnecting()) {
-            playOnCast();
-        }
-
         mVideoView.setVideoPath(url);
         resumeStream();
     }
@@ -1510,14 +1286,7 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
             return;
         }
 
-        String castQuality = getBestCastQuality(qualityURLs, settings.getPrefStreamQuality(), 0);
-        if (castQuality == null) {
-            errorToast.show();
-            return;
-        }
-
-        updateSelectedQuality(castQuality);
-        String url = qualityURLs.get(castQuality);
+        String url = qualityURLs.get(GetLiveStreamURL.QUALITY_SOURCE);
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.parse(url), "video/*");
@@ -1531,10 +1300,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
         String urlToPlay = getLowestQualityUrl();
         if (urlToPlay != null) {
             try {
-                if (castingViewVisible && mCastContext != null) {
-                    mCastContext.getSessionManager().endCurrentSession(true);
-                }
-
                 Intent playerService = PlayerService.createPlayServiceIntent(
                         getContext(),
                         urlToPlay,
@@ -1922,8 +1687,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
             mBufferingView.start();
             //mBufferingView.setVisibility(View.GONE);
             previewInbackGround = false;
-            castingTextView.setVisibility(View.VISIBLE);
-            castingTextView.setText(getString(R.string.stream_audio_only_active));
 
             showVideoInterface();
             updateSelectedQuality(null);
@@ -1939,7 +1702,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
             mBufferingView.setVisibility(View.VISIBLE);
             Service.bringToBack(mPreview);
             previewInbackGround = true;
-            castingTextView.setVisibility(View.INVISIBLE);
 
             showVideoInterface();
             startStreamWithQuality(settings.getPrefStreamQuality());
@@ -2056,9 +1818,7 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
             mPlayPauseWrapper.setVisibility(View.VISIBLE);
             mToolbar.setBackgroundColor(Service.getColorAttribute(R.attr.streamToolbarColor, R.color.black_transparent, getContext()));
 
-            if (!castingViewVisible) {
-                startStreamWithQuality(settings.getPrefStreamQuality());
-            }
+            startStreamWithQuality(settings.getPrefStreamQuality());
 
             optionsMenuItem.setVisible(false);
 
@@ -2121,46 +1881,6 @@ public class StreamFragment extends Fragment implements StreamSessionManagerList
 
     private void hideQualities() {
         mQualityWrapper.setVisibility(View.GONE);
-    }
-
-    @Override
-    public void onError(String errorMessage) {
-        showSnackbar(errorMessage, Snackbar.LENGTH_LONG);
-    }
-
-    @Override
-    public void onConnected() {
-        initCastingView();
-
-        if (qualityURLs != null && qualityURLs.containsKey(GetLiveStreamURL.QUALITY_MEDIUM)) {
-            onCastMediaPlaying();
-            playOnCast();
-        }
-    }
-
-    @Override
-    public void onDisconnected() {
-        Log.d(LOG_TAG, "Disconnected");
-        disableCastingView();
-        startStreamWithQuality(settings.getPrefStreamQuality());
-    }
-
-    @Override
-    public void onCastStateChanged(int i) {
-        switch (i) {
-            case CastState.CONNECTED:
-                CastSession session = mCastContext != null ? mCastContext.getSessionManager().getCurrentCastSession() : null;
-                if (session == null) break;
-                castingTextView.setText(getString(R.string.stream_chromecast_playing, session.getCastDevice().getFriendlyName()));
-                break;
-
-            case CastState.CONNECTING:
-                castingTextView.setText(getString(R.string.stream_chromecast_connecting));
-                break;
-
-            default:
-                break;
-        }
     }
 
     /**

@@ -15,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.sebastianrask.bettersubscription.R;
-import com.sebastianrask.bettersubscription.activities.DonationActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,17 +75,6 @@ public class UpdateDialogHandler extends RecyclerView.Adapter<UpdateDialogHandle
 					mDelegate.onClickGotIt();
 				}
 				dismiss();
-			}
-		});
-
-		dialogContainer.findViewById(R.id.donation_view).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				final Intent intent = new Intent(mParent.getContext(), DonationActivity.class);
-				intent.putExtra(mParent.getContext().getString(R.string.donation_flow_is_user_started), true);
-				mParent.getContext().startActivity(intent);
-
-				mSuperContainer.setVisibility(View.GONE);
 			}
 		});
 
@@ -153,7 +141,7 @@ public class UpdateDialogHandler extends RecyclerView.Adapter<UpdateDialogHandle
 
 	private void setupRecyclerView(RecyclerView recyclerView) {
 		recyclerView.setAdapter(this);
-		recyclerView.setLayoutManager(new LinearLayoutManager(mParent.getContext(), LinearLayoutManager.VERTICAL, false));
+		recyclerView.setLayoutManager(new LinearLayoutManager(mParent.getContext(), RecyclerView.VERTICAL, false));
 
 		addFeature("Chat @ Mention");
 		addFeature("See VOD progress directly from feed");

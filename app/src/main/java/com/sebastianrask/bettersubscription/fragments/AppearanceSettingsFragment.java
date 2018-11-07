@@ -163,7 +163,6 @@ public class AppearanceSettingsFragment extends Fragment {
 		DialogService.getChooseStreamCardStyleDialog(getActivity(), new LayoutSelector.OnLayoutSelected() {
 			@Override
 			public void onSelected(String title, int index, View previewView) {
-				track(R.string.action_stream_style, title);
 
 				View sharedPadding = previewView.findViewById(R.id.shared_padding);
 				ImageView view = (ImageView) previewView.findViewById(R.id.image_stream_preview);
@@ -196,7 +195,6 @@ public class AppearanceSettingsFragment extends Fragment {
 		DialogService.getChooseGameCardStyleDialog(getActivity(), new LayoutSelector.OnLayoutSelected() {
 			@Override
 			public void onSelected(String title, int index, View previewView) {
-				track(R.string.action_game_style, title);
 
 				View sharedPadding = previewView.findViewById(R.id.shared_padding);
 				ImageView view = (ImageView) previewView.findViewById(R.id.image_game_preview);
@@ -239,7 +237,6 @@ public class AppearanceSettingsFragment extends Fragment {
 		DialogService.getChooseStreamerCardStyleDialog(getActivity(), new LayoutSelector.OnLayoutSelected() {
 			@Override
 			public void onSelected(String title, int index, View previewView) {
-				track(R.string.action_streamer_style, title);
 
 				View nameView = previewView.findViewById(R.id.displayName);
 				ImageView streamerLogo = (ImageView) previewView.findViewById(R.id.profileLogoImageView);
@@ -264,13 +261,6 @@ public class AppearanceSettingsFragment extends Fragment {
 		}).show();
 	}
 
-	private void track(@StringRes int type, String title) {
-		if (getActivity() instanceof UsageTrackingAppCompatActivity) {
-			UsageTrackingAppCompatActivity activity = ((UsageTrackingAppCompatActivity) getActivity());
-			activity.trackEvent(R.string.category_click, type, title);
-		}
-	}
-
 	public void onClickStreamSize(View v) {
 		DialogService.getChooseCardSizeDialog(
 				getActivity(),
@@ -279,7 +269,6 @@ public class AppearanceSettingsFragment extends Fragment {
 				new MaterialDialog.ListCallbackSingleChoice() {
 					@Override
 					public boolean onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-						track(R.string.action_stream_size, text.toString());
 						settings.setAppearanceStreamSize(text.toString());
 						initSummaries();
 						return true;
@@ -296,7 +285,6 @@ public class AppearanceSettingsFragment extends Fragment {
 				new MaterialDialog.ListCallbackSingleChoice() {
 					@Override
 					public boolean onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-						track(R.string.action_streamer_size, text.toString());
 
 						settings.setAppearanceChannelSize(text.toString());
 						initSummaries();
@@ -314,7 +302,6 @@ public class AppearanceSettingsFragment extends Fragment {
 				new MaterialDialog.ListCallbackSingleChoice() {
 					@Override
 					public boolean onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-						track(R.string.action_game_size, text.toString());
 
 						settings.setAppearanceGameSize(text.toString());
 						initSummaries();

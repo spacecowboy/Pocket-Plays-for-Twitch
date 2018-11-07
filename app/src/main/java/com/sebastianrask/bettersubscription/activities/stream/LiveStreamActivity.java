@@ -6,11 +6,6 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.fragment.app.FragmentManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.transition.Fade;
 import android.transition.Slide;
 import android.transition.Transition;
@@ -21,23 +16,22 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
 
-import com.google.android.gms.cast.MediaInfo;
-import com.google.android.gms.cast.MediaMetadata;
-
-import com.google.android.gms.cast.framework.CastContext;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.sebastianrask.bettersubscription.R;
 import com.sebastianrask.bettersubscription.adapters.MentionAdapter;
 import com.sebastianrask.bettersubscription.fragments.ChatFragment;
 import com.sebastianrask.bettersubscription.fragments.StreamFragment;
 import com.sebastianrask.bettersubscription.model.ChannelInfo;
 import com.sebastianrask.bettersubscription.model.StreamInfo;
-import com.sebastianrask.bettersubscription.service.Service;
 import com.sebastianrask.bettersubscription.service.Settings;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Created by Sebastian Rask on 18-06-2016.
@@ -77,27 +71,6 @@ public class LiveStreamActivity extends StreamActivity {
 		Intent intent = getIntent();
 		ChannelInfo mChannelInfo = intent.getParcelableExtra(getResources().getString(R.string.intent_key_streamer_info));
 		int currentViewers = intent.getIntExtra(getResources().getString(R.string.intent_key_stream_viewers), -1);
-
-		if (mChannelInfo == null) {
-			try {
-				CastContext sharedContext = Service.getShareCastContext(this);
-
-				MediaInfo mediaInfo = null;
-				if (sharedContext != null) {
-					mediaInfo = sharedContext.getSessionManager().getCurrentCastSession().getRemoteMediaClient().getMediaInfo();
-				}
-
-				if (mediaInfo != null) {
-					MediaMetadata metadata = mediaInfo.getMetadata();
-					mChannelInfo = new Gson().fromJson(metadata.getString(getString(R.string.stream_fragment_streamerInfo)), new TypeToken<ChannelInfo>() {
-					}.getType());
-					autoPlay = false;
-				}
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 
 		Bundle args = new Bundle();
 		args.putParcelable(getString(R.string.stream_fragment_streamerInfo), mChannelInfo);

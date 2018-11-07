@@ -45,10 +45,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
-import com.google.android.gms.cast.framework.CastContext;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.sebastianrask.bettersubscription.PocketPlaysApplication;
 import com.sebastianrask.bettersubscription.R;
 import com.sebastianrask.bettersubscription.activities.main.FeaturedStreamsActivity;
 import com.sebastianrask.bettersubscription.activities.main.MyChannelsActivity;
@@ -637,10 +633,6 @@ public class Service {
     }
 
     public static String urlToJSONString(String urlToRead) {
-        if (!PocketPlaysApplication.isCrawlerUpdate && urlToRead.contains("api.twitch")) {
-            PocketPlaysApplication.trackEvent(R.string.category_api, R.string.action_api_twitch, urlToRead);
-        }
-
         URL url;
         HttpURLConnection conn = null;
         Scanner in = null;
@@ -1038,18 +1030,5 @@ public class Service {
         }
 
         return bitmap;
-    }
-
-    @Nullable
-    public static CastContext getShareCastContext(Context context) {
-        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS) {
-            try {
-                return CastContext.getSharedInstance(context);
-            } catch (Exception e) {
-                Log.e("Cast", "Failed to initialize cast context");
-            }
-        }
-
-        return null;
     }
 }

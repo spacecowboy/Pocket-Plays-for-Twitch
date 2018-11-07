@@ -98,7 +98,6 @@ public class LoginActivity extends UsageTrackingAppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
-		trackEvent(R.string.category_read, R.string.action_login);
 
 		mLoginTextContainer 	= findViewById(R.id.login_text_container);
 		mWebViewProgress 		= findViewById(R.id.SetupProgress);
@@ -175,7 +174,6 @@ public class LoginActivity extends UsageTrackingAppCompatActivity {
 	 */
 	private void initSkipView() {
 		mSkipText.setOnClickListener(v -> {
-			trackEvent(R.string.category_click, R.string.action_skip);
 			showSkippingAnimation();
 		});
 	}

@@ -12,7 +12,6 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.sebastianrask.bettersubscription.R;
-import com.sebastianrask.bettersubscription.activities.DonationActivity;
 import com.sebastianrask.bettersubscription.activities.ThemeActivity;
 import com.sebastianrask.bettersubscription.adapters.SettingsCategoryAdapter;
 import com.sebastianrask.bettersubscription.model.SettingsCategory;
@@ -114,12 +113,6 @@ public class SettingsActivity extends ThemeActivity implements SRJAdapter.ItemCa
 						R.string.settings_rate_summary,
 						R.drawable.ic_thumb_up_black_48dp,
 						Service.getPlayStoreIntent()
-				),
-				new SettingsCategory(
-						R.string.settings_donate_name,
-						R.string.settings_donate_summary,
-						R.drawable.ic_heart_24dp,
-						constructDonationIntent()
 				)
 		}));
 	}
@@ -127,13 +120,6 @@ public class SettingsActivity extends ThemeActivity implements SRJAdapter.ItemCa
 	private Intent constructCategoryIntent(final Class toActivity) {
 		Intent intent = new Intent(this, toActivity);
 		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-		return intent;
-	}
-
-	private Intent constructDonationIntent() {
-		final Intent intent = new Intent(this, DonationActivity.class);
-		intent.putExtra(getString(R.string.donation_flow_is_user_started), true);
 
 		return intent;
 	}
